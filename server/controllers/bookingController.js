@@ -1,0 +1,178 @@
+import booking from "../models/Booking.js";
+
+import hotel from "../models/Hotel.js";
+import transporter from "../configs/nodeMailer.js";
+import Stripe from "stripe";
+import Room from "../models/Room.js";
+
+// function check availability
+export const checkAvailability = async ({
+  checkinDate,
+  checkoutDate,
+  room,
+}) => {
+  try {
+    const bookings = await booking.find({
+      room,
+      checkinDate: { $lte: Date(checkoutDate) },
+      checkoutDate: { $gte: Date(checkinDate) },
+    });
+    const isAvailable = bookings.length === 0;
+    return isAvailable;
+  } catch (error) {
+    console.error(error.message);
+  }
+};
+
+// api to checkavailabilty for room
+export const checkAvailabilityAPI = async (req, res) => {
+  try {
+    const { room, checkin, checkout } = req.body;
+    const isAvailable = await checkAvailability({
+      checkinDate: checkin,
+      checkoutDate: checkout,
+      room,
+    });
+
+    return res.json({ success: true, isAvailable });
+  } catch (error) {
+    res.json({ success: false, isAvailable });
+  }
+};
+
+export const createBooking = async (req, res) => {
+  try {
+    const { room, checkInDate, checkOutDate, guests } = req.body;
+    const user = req.user._id;
+
+    // Before booking check checkAvailability
+    const isAvailable = await checkAvailability({
+      checkInDate,
+      checkOutDate,
+      room,
+    });
+
+    if (!isAvailable) {
+      return res.json({ success: false, message: "Room is not availabel" });
+    }
+    // get totalprice from Room
+    const roomData = await Room.findById(room).populate("hotel");
+    let totalPrice = roomData.pricePerNight;
+
+    // Calculate totalprice  based on nights
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const timeDiff = checkOut.getTime() - checkIn.getTime();
+    const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    totalPrice*=nights;
+
+    const newBooking = await booking.create({
+      user,
+      room,
+      hotel: roomData.hotel._id,
+      checkInDate,
+      checkOutDate,
+      guests: +guests,
+      totalPrice,
+    });
+
+    // Send Confirmation Email
+    const mailOptions = {
+      from: process.env.SMTP_USER,
+      to: req.user.email,
+      subject: "Hotel Booking Confirmation",
+      html: `
+      <h2> Your Booking Details</h2>
+      <p>Dear: ${req.user.username},</p>
+      <p>Thank you for your Booking! here are your details :</p>
+      <ul>
+      <li><strong>Booking ID :</strong>${newBooking._id}</li>
+      <li><strong>Hotel Name :</strong>${roomData.hotel.name}</li>
+      <li><strong>Location :</strong>${roomData.hotel.address}</li>
+      <li><strong>Date :</strong>${newBooking.checkInDate.toDateString()}</li>
+      <li><strong>Booking Amount :</strong>${process.env.currency || '$'} ${booking.totalPrice}/night</li>
+      </ul>
+      <p> We look forward to welcoming you!</p>
+      <p> If you need to make any change, feel free to contact us.</p>
+      
+      
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+
+    res.json({ success: true, message: "Booking created successfully" });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export const stripePayment = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    const bookingData = await booking.findById(bookingId).populate("hotel");
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: { name: bookingData.hotel.name },
+            unit_amount: bookingData.totalPrice * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${req.headers.origin}/loader/my-bookings`,
+      cancel_url: `${req.headers.origin}/my-bookings`,
+      metadata: { bookingId },
+    });
+
+    res.json({ success: true, url: session.url });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export const getUserBookings = async (req, res) => {
+  try {
+    const bookings = await booking
+      .find({ user: req.user._id })
+      .populate("room hotel")
+      .sort({ createdAt: -1 });
+    res.json({ success: true, bookings });
+  } catch (error) {
+    res.json({ success: false, message: "Failed to fetch bookings" });
+  }
+};
+
+export const getHotelDashboardData = async (req, res) => {
+  try {
+    const ownerHotel = await hotel.findOne({ owner: req.auth.userId });
+    if (!ownerHotel) {
+      return res.json({ success: false, message: " No Hotel Found" });
+    }
+    const bookings = await booking
+      .find({ hotel: ownerHotel._id })
+      .populate("user room hotel")
+      .sort({ createdAt: -1 });
+    const totalBookings = booking.length;
+    const totalRevenue = bookings.reduce(
+      (acc, booking) => acc + booking.totalPrice,
+      0,
+    );
+
+    res.json({
+      success: true,
+      dashboardData: {
+        totalBookings,
+        totalRevenue,
+        bookings,
+      },
+    });
+  } catch (error) {
+    res.json({ success: false, message:"Failed to fetch bookings" });
+  }
+};
