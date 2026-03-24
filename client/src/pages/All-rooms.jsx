@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import {  useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext.jsx";
-import HotelCard from "../components/Hotel-Card.jsx";
-import { assets, facilityIcons, roomsDummyData } from "../assets/assets.js";
+
+import { assets, facilityIcons} from "../assets/assets.js";
 import StarRating from "../components/Star-rating.jsx";
 
 const CheckBox = ({ label, selected = false, onchange = () => {} }) => {
@@ -76,7 +76,7 @@ const AllRooms = () => {
   // function to check if a room matches the selected room types 
 
   const matchesRoomType=(room)=>{
-    return selectedFilters.roomTypes.length === 0 || selectedFilters.roomTypes.imcludes(room.roomTypes)
+    return selectedFilters.roomTypes.length === 0 || selectedFilters.roomTypes.includes(room.roomType)
   }
 
   // function to check if aroom matches the selected price range 
@@ -92,14 +92,14 @@ const AllRooms = () => {
 // function to sort room based on the selectd sort option 
 
 const sortRoom=(a,b)=>{
-  if(selectedSort==='Price Lowto High'){
+  if(selectedSort==='Price Low to High'){
     return a.pricePerNight-b.pricePerNight;
   }
   if(selectedSort==='Price High to Low'){
-    return b.pricePerNight=a.pricePerNight;
+    return b.pricePerNight-a.pricePerNight;
   }
   if(selectedSort==='Newest First'){
-    return new Date(b.createdAT)-new Date(a.createdAt)
+    return new Date(b.createdAT) - new Date(a.createdAt)
   }
   return 0;
 

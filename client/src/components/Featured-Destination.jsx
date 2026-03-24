@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext.jsx'
 const FeaturedDestination = () => {
   const {rooms,navigate}=useAppContext()
   
-  return rooms.length>0 && (
+  return rooms.length > 0 && (
     <div className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 py-20">
       <Title 
         title="Featured Destination" 

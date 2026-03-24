@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import Title from "../../components/Title.jsx";
 import { useAppContext } from "../../context/AppContext.jsx";
 import toast from "react-hot-toast";
@@ -20,7 +20,7 @@ const ListRoom = () => {
       toast.error(data.message)
     }
   }catch (err) {
-      toast.log(err.message);
+      toast.error(err.message);
     }
   };
 

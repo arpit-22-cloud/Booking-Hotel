@@ -26,43 +26,60 @@ const RoomDetails = () => {
     room && setMainImage(room.images[0]);
   }, [rooms]);
 
-  const onCheckAvailability = async (e) => {
-    
-    try {
-      if(checkInDate>=checkOutDate){
-        toast.error('Check-In Date should be less than check-out Date')
-        return;
-      }
-      const { data } = await axios.post("/api/bookings/check-availability", {
+ const onCheckAvailability = async () => {
+  try {
+    if (checkInDate >= checkOutDate) {
+      toast.error('Check-In Date should be less than check-out Date');
+      return;
+    }
+
+    const token = await getToken(); // ✅ ADD THIS
+
+    const { data } = await axios.post(
+      "/api/bookings/check-availability",
+      {
         room: id,
-      checkInDate,checkOutDate 
-      });
-      if(data.success){
+        checkInDate,
+        checkOutDate,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }, // ✅ ADD THIS
+      }
+    );
+
+    if (data.success) {
       if (data.isAvailable) {
         setIsAvailable(true);
         toast.success("Room is available!");
       } else {
         setIsAvailable(false);
         toast.error("Room is not available.");
-      }}else{
-        toast.error(data.message)
-
       }
-    } catch (err) {
-      toast.error(err.message);
+    } else {
+      toast.error(data.message);
     }
-  };
+  } catch (err) {
+    toast.error(err.message);
+  }
+};
 
-  const onSubmitHandler = async () => {
+  const onSubmitHandler = async (e) => {
+    
+    e.preventDefault();
+
+    if (!checkInDate || !checkOutDate) {
+    toast.error("Please select check-in and check-out dates");
+    return;
+  }
     try {
-      e.preventDefault();
+      
       if(!isAvailable){
         return onCheckAvailability();
       }else{
  const token = await getToken();
       const { data } = await axios.post(
         "/api/bookings/book",
-        { room: id,checkInDate,checkOutDate,paymentMethod:"Pay At Hotel"},
+        { room: id,checkInDate,checkOutDate,guests,paymentMethod:"Pay At Hotel"},
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -71,10 +88,13 @@ const RoomDetails = () => {
      
       if (data.success) {
         toast.success(data.message);
+        setTimeout(()=>{
+
+       
         navigate("/my-bookings");
-        scrollTo(0,0)
+        window.scrollTo(0,0) },1000)
       }else{
-        toast.error(err.message);
+        toast.error(data.message);
       }
     }
     } catch (err) {
@@ -142,7 +162,7 @@ const RoomDetails = () => {
                   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100"
                 >
                   <img
-                    src={facilityIcons[item]}
+                   src={facilityIcons[item]}
                     alt={item}
                     className="w-5 h-5"
                   />
@@ -199,7 +219,7 @@ const RoomDetails = () => {
             </div>
           </div>
 
-          <button className="bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-25 py-3 md:py-4 text-base cursor-pointer">
+          <button type="submit" className="bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-25 py-3 md:py-4 text-base cursor-pointer">
             {isAvailable ? "Book Now " : "Check Availability"}
           </button>
         </form>

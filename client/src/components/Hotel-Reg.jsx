@@ -12,22 +12,26 @@ const HotelReg = () => {
   const [city ,setCity]=useState("")
 
   const onSubmitHandler = async (e) => {
-  
-    try {
-        e.preventDefault()
+    e.preventDefault()
+    console.log('form submited')
 
+    try {
+      
         // console.log(" submitted")
       const token = await getToken()
       //  console.log("TOKEN:", token)
-      const { data } = await axios.post('/api/hotels', {name,contact,address,city}, {
+      const { data } = await axios.post('/api/hotels/', {name,contact,address,city}, {
         headers: { Authorization: `Bearer ${ token}` }
       })
+      console.log("response :" ,data)
       // console.log("DATA:", data)
       if (data.success) {
         toast.success(data.message)
         setIsOwner(true)
         setShowHotelRegistration(false)
-      }
+      }else{
+toast.error
+(data.message)      }
     } catch (err) { toast.error(err.message) }
   }
 
@@ -126,7 +130,7 @@ const HotelReg = () => {
               ))}
             </select>
           </div>
-          <button  className="bg-indigo-500 hover:bg-indigo-600 transition-all text-white mr-auto px-6 py-2 rounded cursor-pointer mt-6">Register</button>
+          <button type="submit"  className="bg-indigo-500 hover:bg-indigo-600 transition-all text-white mr-auto px-6 py-2 rounded cursor-pointer mt-6">Register</button>
 
         
         </div>

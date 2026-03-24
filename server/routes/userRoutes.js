@@ -8,6 +8,6 @@ const userRouter = express.Router();
 userRouter.get('/', protect, getUserData); 
 
 // Endpoint to update recent search history
-userRouter.post('/store-recent-search', protect, storeRecentSearchedCities); [14]
+userRouter.post('/store-recent-search', protect, storeRecentSearchedCities); 
 
 export default userRouter; 

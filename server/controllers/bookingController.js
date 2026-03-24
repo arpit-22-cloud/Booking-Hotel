@@ -1,21 +1,21 @@
-import booking from "../models/Booking.js";
+import Booking from "../models/Booking.js";
 
-import hotel from "../models/Hotel.js";
+import Hotel from "../models/Hotel.js";
 import transporter from "../configs/nodeMailer.js";
 import Stripe from "stripe";
 import Room from "../models/Room.js";
 
 // function check availability
 export const checkAvailability = async ({
-  checkinDate,
-  checkoutDate,
+  checkInDate,
+  checkOutDate,
   room,
 }) => {
   try {
-    const bookings = await booking.find({
+    const bookings = await Booking.find({
       room,
-      checkinDate: { $lte: Date(checkoutDate) },
-      checkoutDate: { $gte: Date(checkinDate) },
+      checkInDate: { $lte: Date(checkOutDate) },
+      checkOutDate: { $gte: Date(checkInDate) },
     });
     const isAvailable = bookings.length === 0;
     return isAvailable;
@@ -27,16 +27,16 @@ export const checkAvailability = async ({
 // api to checkavailabilty for room
 export const checkAvailabilityAPI = async (req, res) => {
   try {
-    const { room, checkin, checkout } = req.body;
+    const { room, checkInDate, checkOutDate } = req.body;
     const isAvailable = await checkAvailability({
-      checkinDate: checkin,
-      checkoutDate: checkout,
+      checkInDate,
+      checkOutDate,
       room,
     });
 
     return res.json({ success: true, isAvailable });
   } catch (error) {
-    res.json({ success: false, isAvailable });
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -66,7 +66,7 @@ export const createBooking = async (req, res) => {
     const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
     totalPrice*=nights;
 
-    const newBooking = await booking.create({
+    const booking = await Booking.create({
       user,
       room,
       hotel: roomData.hotel._id,
@@ -78,7 +78,7 @@ export const createBooking = async (req, res) => {
 
     // Send Confirmation Email
     const mailOptions = {
-      from: process.env.SMTP_USER,
+      from: process.env.SENDER_EMAIL,
       to: req.user.email,
       subject: "Hotel Booking Confirmation",
       html: `
@@ -86,10 +86,10 @@ export const createBooking = async (req, res) => {
       <p>Dear: ${req.user.username},</p>
       <p>Thank you for your Booking! here are your details :</p>
       <ul>
-      <li><strong>Booking ID :</strong>${newBooking._id}</li>
+      <li><strong>Booking ID :</strong>${booking._id}</li>
       <li><strong>Hotel Name :</strong>${roomData.hotel.name}</li>
       <li><strong>Location :</strong>${roomData.hotel.address}</li>
-      <li><strong>Date :</strong>${newBooking.checkInDate.toDateString()}</li>
+      <li><strong>Date :</strong>${booking.checkInDate.toDateString()}</li>
       <li><strong>Booking Amount :</strong>${process.env.currency || '$'} ${booking.totalPrice}/night</li>
       </ul>
       <p> We look forward to welcoming you!</p>
@@ -109,7 +109,7 @@ export const createBooking = async (req, res) => {
 export const stripePayment = async (req, res) => {
   try {
     const { bookingId } = req.body;
-    const bookingData = await booking.findById(bookingId).populate("hotel");
+    const bookingData = await Booking.findById(bookingId).populate("hotel");
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
     const session = await stripe.checkout.sessions.create({
@@ -138,7 +138,7 @@ export const stripePayment = async (req, res) => {
 
 export const getUserBookings = async (req, res) => {
   try {
-    const bookings = await booking
+    const bookings = await Booking
       .find({ user: req.user._id })
       .populate("room hotel")
       .sort({ createdAt: -1 });
@@ -150,19 +150,18 @@ export const getUserBookings = async (req, res) => {
 
 export const getHotelDashboardData = async (req, res) => {
   try {
-    const ownerHotel = await hotel.findOne({ owner: req.auth.userId });
+   const ownerHotel = await Hotel.findOne({ owner: req.user._id });
     if (!ownerHotel) {
       return res.json({ success: false, message: " No Hotel Found" });
     }
-    const bookings = await booking
+    const bookings = await Booking
       .find({ hotel: ownerHotel._id })
-      .populate("user room hotel")
+      .populate("room hotel user")
       .sort({ createdAt: -1 });
-    const totalBookings = booking.length;
+    const totalBookings = bookings.length;
     const totalRevenue = bookings.reduce(
       (acc, booking) => acc + booking.totalPrice,
-      0,
-    );
+      0);
 
     res.json({
       success: true,

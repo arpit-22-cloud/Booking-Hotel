@@ -1,4 +1,4 @@
-import hotel from '../models/Hotel.js';
+import Hotel from '../models/Hotel.js';
 import User from '../models/User.js';
 
 // API controller function to register a new hotel
@@ -9,16 +9,18 @@ export const registerHotel = async (req, res) => {
     
     // The owner ID is retrieved from the authenticated user object attached by middleware
     const owner = req.user._id; 
-
+console.log("USER:", req.user);
+console.log("OWNER:", req.user._id);
     // Check if the user has already registered a hotel
-    const existingHotel = await hotel.findOne({ owner });
+    const hotel = await Hotel.findOne({ owner });
+    console.log("HOTEL FOUND:", hotel);
     
-    if (existingHotel) {
+    if (hotel) {
       return res.json({ success: false, message: 'Hotel already registered' });
     }
 
     // Create a new hotel entry in the database
-    await hotel.create({
+    await Hotel.create({
       name,
       address,
       contact,

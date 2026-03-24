@@ -9,13 +9,13 @@ const AddRoom = () => {
   const [images, setImages] = useState({ 1: null, 2: null, 3: null, 4: null });
   const [inputs, setInputs] = useState({
     roomType: "",
-    price: 0,
+    pricePerNight: 0,
     amenities: {
-      " Free Wifi": false,
-      "mountain View": false,
-      "free Breakfast": false,
+      "Free WiFi": false, // ✅ FIXED
+      "Mountain View": false,
+      "Free Breakfast": false,
       "Room Service": false,
-      "pool Access": false,
+      "Pool Access": false,
     },
   });
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ const AddRoom = () => {
       !inputs.roomType ||
       !inputs.pricePerNight ||
       !inputs.amenities ||
-      !object.values(images).some((image) => image)
+      !Object.values(images).some((image) => image)
     ) {
       toast.error("Please fill in the detail");
       return;
@@ -36,7 +36,7 @@ const AddRoom = () => {
       const formData = new FormData();
       formData.append("roomType", inputs.roomType);
       formData.append("pricePerNight", inputs.pricePerNight);
-      const amenities = Object.leys(inputs.amenities).filter(
+      const amenities = Object.keys(inputs.amenities).filter(
         (key) => inputs.amenities[key],
       );
       formData.append("amenities", JSON.stringify(amenities));
@@ -56,19 +56,19 @@ const AddRoom = () => {
           roomType: "",
           pricePerNight: 0,
           amenities: {
-            " Free Wifi": false,
-            "mountain View": false,
-            "free Breakfast": false,
+            "Free Wifi": false,
+            "Mountain View": false,
+            "Free Breakfast": false,
             "Room Service": false,
-            "pool Access": false,
+            "Pool Access": false,
           },
         });
         setImages({ 1: null, 2: null, 3: null, 4: null });
       } else {
-        toast.error(err.message);
+        toast.error(data.message);
       }
-    } catch (err) {
-      toast.error(err.message);
+    } catch (error) {
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -87,7 +87,7 @@ const AddRoom = () => {
       <p className="text-gray-800 mt-10">Images</p>
       <div className="grid grid-cols-2 sm:flex gap-2 my-2 flex-wrap">
         {Object.keys(images).map((key) => (
-          <label htmlFor={`roomImages${key}`} key={key}>
+          <label htmlFor={`roomImages ${key}`} key={key}>
             <img
               src={
                 images[key]
@@ -100,7 +100,7 @@ const AddRoom = () => {
             <input
               type="file"
               accept="image/*"
-              id={`roomImages${key}`}
+              id={`roomImages ${key}`}
               hidden
               onChange={(e) =>
                 setImages({ ...images, [key]: e.target.files[0] })
@@ -157,7 +157,7 @@ const AddRoom = () => {
                 })
               }
             />
-            <label htmlFor={`amenities${index + 1}`}>{amenity}</label>
+            <label htmlFor={`amenities ${index + 1}`}>{amenity}</label>
           </div>
         ))}
       </div>
@@ -165,7 +165,7 @@ const AddRoom = () => {
         className="bg-primary text-white px-8 py-2 rounded mt-8 cursor-pointer"
         disabled={loading}
       >
-        {loading ? "Adding... " : "0"}
+        {loading ? "Adding... " : "Add Room"}
       </button>
     </form>
   );

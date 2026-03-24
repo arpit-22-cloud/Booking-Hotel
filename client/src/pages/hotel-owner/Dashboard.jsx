@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 import Title from "../../components/Title.jsx";
 import { useAppContext } from "../../context/AppContext.jsx";
 import { assets } from "../../assets/assets.js";
+import toast from "react-hot-toast";
 
 const Dashboard = () => {
-  const { axios, getToken, user ,toast, currency } = useAppContext();
-  const [data, setData] = useState({
-    totalBookings: 0,
-    totalRevenue: 0,
-    bookings: [],
-  });
+  const { axios, getToken, user , currency } = useAppContext();
+  
   const [dashBoardData, setdashBoardData] = useState({
     bookings:[],
     totalBookings:0,
@@ -19,16 +16,16 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = await getToken();
-      const { data } = await axios.get("/api/bookings/hotel", {
+      const { data } = await axios.get("/api/bookings/hotel/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
-        setdashBoardData(data.dashBoardData);
+        setdashBoardData(data.dashboardData);
       }else{
         toast.error(data.message)
       }
-    } catch (err) {
-      toast.log(err.message);
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
