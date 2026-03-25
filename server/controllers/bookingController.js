@@ -14,8 +14,8 @@ export const checkAvailability = async ({
   try {
     const bookings = await Booking.find({
       room,
-      checkInDate: { $lte: Date(checkOutDate) },
-      checkOutDate: { $gte: Date(checkInDate) },
+      checkInDate: { $lte:new  Date(checkOutDate) },
+      checkOutDate: { $gte: new Date(checkInDate) },
     });
     const isAvailable = bookings.length === 0;
     return isAvailable;
@@ -65,6 +65,9 @@ export const createBooking = async (req, res) => {
     const timeDiff = checkOut.getTime() - checkIn.getTime();
     const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
     totalPrice*=nights;
+
+
+
 
     const booking = await Booking.create({
       user,
@@ -142,7 +145,8 @@ export const getUserBookings = async (req, res) => {
       .find({ user: req.user._id })
       .populate("room hotel")
       .sort({ createdAt: -1 });
-    res.json({ success: true, bookings });
+     
+  res.json({ success: true, bookings });
   } catch (error) {
     res.json({ success: false, message: "Failed to fetch bookings" });
   }
@@ -152,16 +156,26 @@ export const getHotelDashboardData = async (req, res) => {
   try {
    const ownerHotel = await Hotel.findOne({ owner: req.user._id });
     if (!ownerHotel) {
-      return res.json({ success: false, message: " No Hotel Found" });
-    }
+  return res.json({
+    success: true,
+    dashboardData: {
+      bookings: [],
+      totalBookings: 0,
+      totalRevenue: 0,
+    },
+  });
+}
     const bookings = await Booking
       .find({ hotel: ownerHotel._id })
       .populate("room hotel user")
       .sort({ createdAt: -1 });
+     
     const totalBookings = bookings.length;
+  
     const totalRevenue = bookings.reduce(
-      (acc, booking) => acc + booking.totalPrice,
-      0);
+  (acc, booking) => acc + booking.totalPrice,
+  0
+);
 
     res.json({
       success: true,

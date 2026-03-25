@@ -4,6 +4,7 @@ import { Webhook } from "svix";
 // Controller to handle Clerk Webhooks [1]
 const clerkWebHooks = async (req, res) => {
   try {
+    
     // Create Svix instance with Clerk Webhook Secret from environment variables [6]
     const Whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
     const headers = {
@@ -12,10 +13,10 @@ const clerkWebHooks = async (req, res) => {
       "svix-signature": req.headers["svix-signature"],
     };
     // Verify the headers to ensure the request is from Clerk
-    await Whook.verify(JSON.stringify(req.body), headers);
+    await Whook.verify(req.body, headers);
 
     // Extracting data and event type from the request body
-    const { data, type } = req.body;
+    const { data, type } = JSON.parse(req.body);
 
     
 
@@ -26,7 +27,7 @@ const clerkWebHooks = async (req, res) => {
     const userData = {
       _id: data.id,
       email: data.email_addresses[0].email_address,
-      username: data.first_name + " " + data.last_name,
+username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
       image: data.image_url,
     };
         await User.create(userData);

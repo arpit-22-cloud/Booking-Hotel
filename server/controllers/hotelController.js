@@ -9,11 +9,10 @@ export const registerHotel = async (req, res) => {
     
     // The owner ID is retrieved from the authenticated user object attached by middleware
     const owner = req.user._id; 
-console.log("USER:", req.user);
-console.log("OWNER:", req.user._id);
+
     // Check if the user has already registered a hotel
     const hotel = await Hotel.findOne({ owner });
-    console.log("HOTEL FOUND:", hotel);
+  
     
     if (hotel) {
       return res.json({ success: false, message: 'Hotel already registered' });
