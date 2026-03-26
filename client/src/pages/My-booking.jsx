@@ -25,13 +25,19 @@ const MyBookings = () => {
   
 }
 
-  // const handlePayment = async (bookingId) => {
-  //   try {
-  //     const token = await getToken()
-  //     const { data } = await axios.post('/api/bookings/stripe-payment', { bookingId }, { headers: { Authorization: `Bearer ${token}` } })
-  //     if (data.success) window.location.href = data.url
-  //   } catch (err) { console.log(err.message) }
-  // }
+  const handlePayment = async (bookingId) => {
+    try {
+      const token = await getToken()
+      const { data } = await axios.post('/api/bookings/stripe-payment', { bookingId }, { headers: { Authorization: `Bearer ${token}` } })
+      if (data.success) {
+        window.location.href = data.url
+    }else{
+      toast.error(data.message)
+    }
+   }catch (error) { toast.error(error.message) 
+
+   }
+  }
 
   useEffect(() => { if (user) fetchBookings() }, [user])
 
@@ -103,7 +109,7 @@ const MyBookings = () => {
             </p>
           </div>
           {!booking.isPaid && (
-            <button className="px-4 py-1.5 mt-4 text-xs border border-gray-400 rounded-full hover:bg-gray-50 transition-all cursor-pointer">
+            <button onClick={()=>handlePayment(booking._id)} className="px-4 py-1.5 mt-4 text-xs border border-gray-400 rounded-full hover:bg-gray-50 transition-all cursor-pointer">
               Pay Now
             </button>
           )}
@@ -113,30 +119,7 @@ const MyBookings = () => {
           </div>
         ))}
       </div>
-      {/* <div className="space-y-6">
-        {bookings.map((booking, idx) => (
-          <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center border rounded-xl p-6 bg-white">
-            <div className="flex gap-4">
-              <img src={booking.room.images} className="h-20 w-28 rounded-lg object-cover" alt="" />
-              <div>
-                <p className="font-bold text-lg">{booking.hotel.name}</p>
-                <p className="text-sm text-gray-500">{booking.room.roomType}</p>
-              </div>
-            </div>
-            <div className="text-sm space-y-1">
-              <p><span className="text-gray-400">In:</span> {new Date(booking.checkin).toDateString()}</p>
-              <p><span className="text-gray-400">Out:</span> {new Date(booking.checkout).toDateString()}</p>
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${booking.isPaid ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <p className={booking.isPaid ? 'text-green-600' : 'text-red-600'}>{booking.isPaid ? 'Paid' : 'Unpaid'}</p>
-              </div>
-              {!booking.isPaid && <button onClick={() => handlePayment(booking.id)} className="bg-primary text-white px-6 py-2 rounded-lg text-sm">Pay Now</button>}
-            </div>
-          </div>
-        ))}
-      </div> */}
+      
     </div>
   );
 };

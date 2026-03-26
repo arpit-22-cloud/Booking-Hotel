@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import{useAppContext} from '../context/AppContext'
 
 const Loader = () => {
   const { nextURL } = useParams()
-  const navigate = useNavigate()
+  const {navigate} = useAppContext()
 
   useEffect(() => {
     if (nextURL) {
@@ -11,7 +12,7 @@ const Loader = () => {
         navigate(`/${nextURL}`)
       }, 8000)
     }
-  }, [nextURL, navigate])
+  }, [nextURL])
 
   return (
     <div className="h-screen flex flex-col items-center justify-center bg-white">
