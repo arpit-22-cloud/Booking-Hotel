@@ -10,7 +10,7 @@ user: {type: String,          // ✅ MUST be String
   totalPrice: { type: Number, required: true },
   guests: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
-  paymentMethod: { type: String, default: 'pay at hotel', required: true },
+  paymentMethod: { type: String, default: 'Pay At Hotel', required: true },
   isPaid: { type: Boolean, default: false }
 }, { timestamps: true });
 

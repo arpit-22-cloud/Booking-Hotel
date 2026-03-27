@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAppContext } from "../context/AppContext.jsx";
 import Title from "../components/Title.jsx";
 import { assets } from "../assets/assets.js";
 import toast from "react-hot-toast";
 
 const MyBookings = () => {
+  const location = useLocation();
   const { axios, getToken, user } = useAppContext();
   const [bookings, setBookings] = useState([]);
 
@@ -30,16 +32,66 @@ const MyBookings = () => {
       const token = await getToken()
       const { data } = await axios.post('/api/bookings/stripe-payment', { bookingId }, { headers: { Authorization: `Bearer ${token}` } })
       if (data.success) {
-        window.location.href = data.url
-    }else{
-      toast.error(data.message)
-    }
+        // optimistic local update for UX before redirect
+        setBookings((prev) =>
+          prev.map((booking) =>
+            booking._id === bookingId
+              ? { ...booking, isPaid: true, paymentMethod: 'stripe' }
+              : booking
+          )
+        );
+
+        window.location.href = data.url;
+      } else {
+        toast.error(data.message);
+      }
    }catch (error) { toast.error(error.message) 
 
    }
   }
 
-  useEffect(() => { if (user) fetchBookings() }, [user])
+  useEffect(() => {
+    if (!user) return;
+
+    const stripeParams = new URLSearchParams(location.search);
+    const stripeStatus = stripeParams.get("stripeStatus");
+    const paymentBookingId = stripeParams.get("bookingId");
+
+    const applyStripeResult = async () => {
+      if (stripeStatus === "success" && paymentBookingId) {
+        try {
+          const token = await getToken();
+          const { data } = await axios.post(
+            "/api/bookings/confirm-payment",
+            { bookingId: paymentBookingId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          if (data.success) {
+            toast.success("Payment confirmed, updating booking status");
+            setBookings((prev) =>
+              prev.map((booking) =>
+                booking._id === paymentBookingId
+                  ? { ...booking, isPaid: true, paymentMethod: "stripe" }
+                  : booking
+              )
+            );
+          } else {
+            toast.error(data.message);
+          }
+        } catch (error) {
+          toast.error(error.response?.data?.message || error.message);
+        } finally {
+          // remove query from URL to avoid loops
+          window.history.replaceState(null, "", "/my-bookings");
+        }
+      }
+
+      await fetchBookings();
+    };
+
+    applyStripeResult();
+  }, [user, location.search]);
 
   return (
     <div className="py-28 md:pb-35 md:pt-32 px-4 md:px-16 lg:px-24 xl:px-32">
