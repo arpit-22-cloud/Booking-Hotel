@@ -30,12 +30,14 @@ app.post('/api/stripe', express.raw({ type: 'application/json' }), stripeWebhook
 
 app.use(clerkMiddleware())
 
+app.use('/api/clerk', clerkRoutes)
+
 app.use(express.json());
 
 // API Routes
 app.get('/', (req, res) => res.send('API is working')) 
 // app.use('/api/clerk', clerkWebHooks) 
-app.use('/api/clerk', clerkRoutes)
+
 app.use('/api/user', userRouter) 
 app.use('/api/hotels', hotelRouter) 
 app.use('/api/rooms', roomRouter) 
