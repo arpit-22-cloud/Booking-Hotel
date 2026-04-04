@@ -37,7 +37,7 @@ export const createRoom = async (req, res) => {
 // api to get all room 
 export const getRooms = async (req, res) => {
   try {
-    const rooms = await Room.find({ isAvailable: true }).populate({path:'hotel',populate:{path:'owner',select:'image'}}).sort({createdAt:-1})
+    const rooms = await Room.find({ isAvailable: true }).populate({path:'hotel',populate:{path:'owner',select:'image'}}).sort({createdAt:-1}).maxTimeMS(30000)
     res.json({ success: true, rooms });
   } catch (error) {
     res.json({ success: false, message: error.message });
@@ -52,7 +52,7 @@ export const getOwnerRooms = async (req, res) => {
     if (!hotelData) {
       return res.json({ success: false, message: "No hotel found" });
     }
-    const rooms = await Room.find({ hotel: hotelData._id.toString() }).populate('hotel');
+    const rooms = await Room.find({ hotel: hotelData._id.toString() }).populate('hotel').maxTimeMS(30000);
     res.json({ success: true, rooms });
   } catch (error) {
     res.json({ success: false, message: error.message });
