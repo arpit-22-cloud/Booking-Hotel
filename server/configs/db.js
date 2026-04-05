@@ -1,21 +1,26 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 const connectDB = async () => {
-  try {
-    console.log("Connecting to MongoDB... ⏳")
+  
 
+  try {
+    // Set mongoose options
+    mongoose.set('bufferCommands', false);
+
+    // Event listener for a successful connection
+    mongoose.connection.on('connected', () => {
+      console.log('database connected');
+    });
+
+    // Connect using the URI from environment variables
     await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-    })
-
-    console.log("MongoDB Connected ✅")
-
+    });
   } catch (error) {
-    console.error("❌ MongoDB Connection Error:")
-    console.error(error.message)
-    process.exit(1)
+    console.error('MongoDB connection failed:', error.message);
+    throw error;
   }
-}
+};
 
-export default connectDB
+export default connectDB;
