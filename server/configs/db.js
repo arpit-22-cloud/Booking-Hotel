@@ -1,23 +1,20 @@
 import mongoose from 'mongoose';
 
 const connectDB = async () => {
-  
-
   try {
-    // Set mongoose options
     mongoose.set('bufferCommands', false);
 
-    // Event listener for a successful connection
-  mongoose.connection.on('connected', () => {
-    console.log("database connected");
-  });
-    // Connects using the URI from environment variables and defines the database name
-    await mongoose.connect(`${process.env.MONGODB_URI}`, {
-      serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    // Connect to MongoDB
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     });
+
+    console.log(`MongoDB Connected ✅: ${conn.connection.host}`);
+
   } catch (error) {
-    console.log(error.message);
+    console.error("MongoDB connection failed ❌:", error.message);
+    process.exit(1); // stop app if DB fails
   }
 };
 
